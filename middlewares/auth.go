@@ -9,11 +9,15 @@ import (
 
 	"github.com/dorklord23/anima-prime/routes"
 	"github.com/dorklord23/anima-prime/utils"
+	"github.com/gorilla/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
 )
 
 // Authenticate : function to authenticate a request based on a particular header in the request
 func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := appengine.NewContext(r)
 		anonymousEndpoints := make(map[string][]string)
 		anonymousEndpoints["POST"] = []string{"/api/users"}
 
@@ -36,7 +40,9 @@ func Authenticate(next http.Handler) http.Handler {
 			// Decode the token
 			decodedTokenInBytes, err := base64.StdEncoding.DecodeString(r.Header.Get("anima-prime-token"))
 			if err != nil {
-				routes.SendResponse(w, 500, err.Error(), "error")
+				data := make(map[string]string)
+				data["Message"] = "Invalid access token"
+				routes.SendResponse(w, 400, data, "fail")
 				return
 			}
 
@@ -50,7 +56,7 @@ func Authenticate(next http.Handler) http.Handler {
 				return
 			}
 
-			t, err2 := time.Parse("2006-01-02T15:04:05.000Z", creationDate)
+			t, err2 := time.Parse("2006-01-02T15:04:05Z", creationDate)
 			if err2 != nil {
 				routes.SendResponse(w, 500, err2.Error(), "error")
 				return
@@ -64,6 +70,31 @@ func Authenticate(next http.Handler) http.Handler {
 				routes.SendResponse(w, 401, data, "fail")
 				return
 			}
+
+			// Decode the key
+			key, err4 := datastore.DecodeKey(splitStrings[0])
+			if err4 != nil {
+				routes.SendResponse(w, 500, err4.Error(), "error")
+				return
+			}
+
+			// Pass the requester's user key and authority to the handler
+			var userStruct routes.User
+			err5 := datastore.Get(ctx, key, &userStruct)
+			if err5 == datastore.Done {
+				// The requester is not a registered user
+				data := make(map[string]string)
+				data["Email"] = "The requester is not recognized"
+				routes.SendResponse(w, 401, data, "fail")
+				return
+			}
+			if err5 != nil {
+				routes.SendResponse(w, 500, err5.Error(), "error")
+				return
+			}
+
+			context.Set(r, "currentUserAuthority", userStruct.Authority)
+			context.Set(r, "currentUserEmail", userStruct.Email)
 
 			next.ServeHTTP(w, r)
 		}

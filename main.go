@@ -28,7 +28,7 @@ func init() {
 	r := mux.NewRouter()
 	s := r.PathPrefix("/api").Subrouter()
 	s.HandleFunc("/users", routes.CreateUsers).Methods("POST")
-	s.HandleFunc("/users/{userId}", routes.UpdateUsers).Methods("PUT")
+	s.HandleFunc("/users/{userKey}", routes.UpdateUsers).Methods("PUT")
 	s.Use(middlewares.Authenticate)
 	// The path "/" matches everything not matched by some other path.
 	http.Handle("/", r)
