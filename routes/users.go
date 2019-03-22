@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -113,7 +115,7 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
 	SendResponse(w, 201, data, "success")
 }
 
-// UpdateUsers : endpoint to update a user.
+// UpdateUsers : endpoint to update a user data
 // A user could only change their own profile unless they're the admin
 func UpdateUsers(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -186,4 +188,78 @@ func UpdateUsers(w http.ResponseWriter, r *http.Request) {
 	data["Message"] = "OK"
 
 	SendResponse(w, 204, data, "success")
+}
+
+// GetUsers : endpoint to retrieve a user data
+// A user could only retrieve their own profile unless they're the admin
+func GetUsers(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	userMap := make(map[string]interface{})
+	responseTemplate := make(map[string]string)
+	ctx := appengine.NewContext(r)
+
+	// Check if this user is eligible to retrieve the target profile by comparing the email in access token with the email of target profile IF AND ONLY IF the user is a non-admin
+	key, err := datastore.DecodeKey(params["userKey"])
+	if err != nil {
+		data := make(map[string]string)
+		data["Message"] = "There is no such user"
+		SendResponse(w, 404, data, "fail")
+		return
+	}
+
+	var userStruct User
+
+	// Retrieve the data
+	err2 := datastore.Get(ctx, key, &userStruct)
+	if err2 == datastore.Done {
+		// No such user
+		data := make(map[string]string)
+		data["Message"] = "There is no such user to retrieve"
+		SendResponse(w, 404, data, "fail")
+		return
+	}
+	if err2 != nil {
+		SendResponse(w, 500, err2.Error(), "error")
+		return
+	}
+
+	// Check the requester's authority first
+	currentUserAuthority := context.Get(r, "currentUserAuthority")
+	if currentUserAuthority != "admin" {
+		// Proceed to compare the emails
+		currentUserEmail := context.Get(r, "currentUserEmail")
+		if userStruct.Email != currentUserEmail {
+			// Different email. Hence, the user is not to retrieve the target profile
+			data := make(map[string]string)
+			data["Message"] = "You are not eligible to retrieve this user data"
+			SendResponse(w, 403, data, "fail")
+			return
+		}
+	}
+
+	err3 := mapstructure.Decode(userStruct, &userMap)
+	if err3 != nil {
+		SendResponse(w, 500, err3.Error(), "error")
+		return
+	}
+
+	delete(userMap, "Hash")
+	delete(userMap, "CreatedAt")
+	delete(userMap, "ModifiedAt")
+
+	for key, value := range userMap {
+		strKey := fmt.Sprintf("%v", key)
+		strValue := fmt.Sprintf("%v", value)
+		// var strValue string
+		//
+		// if strKey == "CreatedAt" || strKey == "ModifiedAt" {
+		// 	strValue = fmt.Sprintf("%v", value.(time.Time).Format(time.RFC3339))
+		// } else {
+		// 	strValue = fmt.Sprintf("%v", value)
+		// }
+
+		responseTemplate[strKey] = strValue
+	}
+
+	SendResponse(w, 200, responseTemplate, "success")
 }
