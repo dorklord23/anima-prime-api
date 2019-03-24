@@ -1,8 +1,14 @@
 package routes
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"strings"
+	"time"
+
+	"github.com/dorklord23/anima-prime/utils"
+	"google.golang.org/appengine/datastore"
 )
 
 type errorResponse struct {
@@ -21,7 +27,7 @@ type failResponse struct {
 }
 
 // SendResponse is a function to send JSON-formatted HTTP response
-func SendResponse(w http.ResponseWriter, statusCode int, payload interface{}, responseType string) {
+func SendResponse(w http.ResponseWriter, statusCode int, payload interface{}, responseType string, options map[string]string) {
 	var response []byte
 	var err error
 
@@ -35,7 +41,7 @@ func SendResponse(w http.ResponseWriter, statusCode int, payload interface{}, re
 		response, err = json.Marshal(template)
 		if err != nil {
 			// http.Error(w, err.Error(), http.StatusInternalServerError)
-			SendResponse(w, 500, err.Error(), "error")
+			SendResponse(w, 500, err.Error(), "error", nil)
 			return
 		}
 	case "fail":
@@ -46,7 +52,7 @@ func SendResponse(w http.ResponseWriter, statusCode int, payload interface{}, re
 
 		response, err = json.Marshal(template)
 		if err != nil {
-			SendResponse(w, 500, err.Error(), "error")
+			SendResponse(w, 500, err.Error(), "error", nil)
 			return
 		}
 	case "error":
@@ -57,13 +63,35 @@ func SendResponse(w http.ResponseWriter, statusCode int, payload interface{}, re
 
 		response, err = json.Marshal(template)
 		if err != nil {
-			SendResponse(w, 500, err.Error(), "error")
+			SendResponse(w, 500, err.Error(), "error", nil)
 			return
 		}
 	default:
 	}
 
+	if options != nil {
+		for key, value := range options {
+			w.Header().Set(key, value)
+		}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	w.Write(response)
+}
+
+// GenerateAccessToken : function to generate access token
+func GenerateAccessToken(userKey *datastore.Key) string {
+	var template strings.Builder
+
+	// Generate the access token
+	template.WriteString(userKey.Encode())
+	template.WriteString("|")
+	template.WriteString(time.Now().Format(time.RFC3339))
+	template.WriteString("|")
+	// Expiry time for the token in 1 days
+	template.WriteString("1")
+	template.WriteString("|")
+	template.WriteString(utils.RandSeq(5))
+
+	return base64.StdEncoding.EncodeToString([]byte(template.String()))
 }

@@ -27,9 +27,14 @@ func init() {
 	// A little hack to use mux in App Engine
 	r := mux.NewRouter()
 	s := r.PathPrefix("/api").Subrouter()
+
+	// The only non-RESTful endpoint in this API to accomodate login
+	s.HandleFunc("/login", routes.AuthenticateUser).Methods("POST")
+
 	s.HandleFunc("/users", routes.CreateUsers).Methods("POST")
 	s.HandleFunc("/users/{userKey}", routes.UpdateUsers).Methods("PUT")
 	s.HandleFunc("/users/{userKey}", routes.GetUsers).Methods("GET")
+
 	s.Use(middlewares.Authenticate)
 	// The path "/" matches everything not matched by some other path.
 	http.Handle("/", r)

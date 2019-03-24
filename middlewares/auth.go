@@ -19,7 +19,9 @@ func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := appengine.NewContext(r)
 		anonymousEndpoints := make(map[string][]string)
-		anonymousEndpoints["POST"] = []string{"/api/users"}
+		anonymousEndpoints["POST"] = []string{
+			"/api/users", "/api/login",
+		}
 
 		// Check if this request doesn't need to be authenticated based on the method...
 		if len(anonymousEndpoints[r.Method]) > 0 {
@@ -35,14 +37,14 @@ func Authenticate(next http.Handler) http.Handler {
 		if r.Header.Get("anima-prime-token") == "" {
 			data := make(map[string]string)
 			data["Message"] = "This request cannot be authenticated"
-			routes.SendResponse(w, 401, data, "fail")
+			routes.SendResponse(w, 401, data, "fail", nil)
 		} else {
 			// Decode the token
 			decodedTokenInBytes, err := base64.StdEncoding.DecodeString(r.Header.Get("anima-prime-token"))
 			if err != nil {
 				data := make(map[string]string)
 				data["Message"] = "Invalid access token"
-				routes.SendResponse(w, 400, data, "fail")
+				routes.SendResponse(w, 400, data, "fail", nil)
 				return
 			}
 
@@ -52,13 +54,13 @@ func Authenticate(next http.Handler) http.Handler {
 			creationDate := splitStrings[1]
 			tokenAge, err3 := strconv.Atoi(splitStrings[2])
 			if err3 != nil {
-				routes.SendResponse(w, 500, err3.Error(), "error")
+				routes.SendResponse(w, 500, err3.Error(), "error", nil)
 				return
 			}
 
 			t, err2 := time.Parse("2006-01-02T15:04:05Z", creationDate)
 			if err2 != nil {
-				routes.SendResponse(w, 500, err2.Error(), "error")
+				routes.SendResponse(w, 500, err2.Error(), "error", nil)
 				return
 			}
 
@@ -67,14 +69,14 @@ func Authenticate(next http.Handler) http.Handler {
 			if time.Now().After(expiryTime) {
 				data := make(map[string]string)
 				data["Message"] = "Your token has expired."
-				routes.SendResponse(w, 401, data, "fail")
+				routes.SendResponse(w, 401, data, "fail", nil)
 				return
 			}
 
 			// Decode the key
 			key, err4 := datastore.DecodeKey(splitStrings[0])
 			if err4 != nil {
-				routes.SendResponse(w, 500, err4.Error(), "error")
+				routes.SendResponse(w, 500, err4.Error(), "error", nil)
 				return
 			}
 
@@ -85,11 +87,11 @@ func Authenticate(next http.Handler) http.Handler {
 				// The requester is not a registered user
 				data := make(map[string]string)
 				data["Email"] = "The requester is not recognized"
-				routes.SendResponse(w, 401, data, "fail")
+				routes.SendResponse(w, 401, data, "fail", nil)
 				return
 			}
 			if err5 != nil {
-				routes.SendResponse(w, 500, err5.Error(), "error")
+				routes.SendResponse(w, 500, err5.Error(), "error", nil)
 				return
 			}
 
