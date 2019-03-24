@@ -23,6 +23,10 @@ func Authenticate(next http.Handler) http.Handler {
 			"/api/users", "/api/login",
 		}
 
+		anonymousEndpoints["GET"] = []string{
+			"/api/tokens",
+		}
+
 		// Check if this request doesn't need to be authenticated based on the method...
 		if len(anonymousEndpoints[r.Method]) > 0 {
 			// ... and  the URL
