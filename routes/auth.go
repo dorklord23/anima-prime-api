@@ -13,15 +13,26 @@ import (
 // AuthenticateUser : endpoint to refresh access token and refresh token with login.
 func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
-	loginData := make(map[string]string)
+	loginData := make(map[string]interface{})
 	var user User
 	var key *datastore.Key
 	var err2 error
+	requiredArgs := map[string]string{
+		"Password": "required",
+		"Email":    "required",
+	}
 
 	// Parse the request body and populate loginData
 	err := json.NewDecoder(r.Body).Decode(&loginData)
 	if err != nil {
 		SendResponse(w, 500, err.Error(), "error", nil)
+		return
+	}
+
+	// Check if there are any missing arguments
+	missingArgs := CheckArgs(loginData, requiredArgs)
+	if missingArgs != nil {
+		SendResponse(w, 400, missingArgs, "fail", nil)
 		return
 	}
 
@@ -42,7 +53,7 @@ func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if checkPasswordHash(loginData["Password"], user.Hash) {
+		if checkPasswordHash(loginData["Password"].(string), user.Hash) {
 			// Proceed to generate the access token and refresh token
 			break
 		} else {
@@ -68,8 +79,8 @@ func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]string{
-		"accessToken":  accessToken,
-		"refreshToken": refreshToken,
+		"AccessToken":  accessToken,
+		"RefreshToken": refreshToken,
 	}
 
 	SendResponse(w, 200, response, "success", nil)
@@ -118,8 +129,8 @@ func RefreshAccessToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]string{
-		"accessToken":  accessToken,
-		"refreshToken": refreshToken,
+		"AccessToken":  accessToken,
+		"RefreshToken": refreshToken,
 	}
 
 	SendResponse(w, 200, response, "success", nil)

@@ -33,11 +33,24 @@ var adminAuthority = "admin"
 func CreateUsers(w http.ResponseWriter, r *http.Request) {
 	userMap := make(map[string]interface{})
 	ctx := appengine.NewContext(r)
+	requiredArgs := map[string]string{
+		"FullName":        "required",
+		"Password":        "required",
+		"PasswordConfirm": "required",
+		"Email":           "required",
+	}
 
 	// Parse the request body and populate user
 	err := json.NewDecoder(r.Body).Decode(&userMap)
 	if err != nil {
 		SendResponse(w, 500, err.Error(), "error", nil)
+		return
+	}
+
+	// Check if there are any missing arguments
+	missingArgs := CheckArgs(userMap, requiredArgs)
+	if missingArgs != nil {
+		SendResponse(w, 400, missingArgs, "fail", nil)
 		return
 	}
 
@@ -122,10 +135,21 @@ func UpdateUsers(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	userMap := make(map[string]interface{})
 	ctx := appengine.NewContext(r)
+	requiredArgs := map[string]string{
+		"FullName": "optional",
+		"Email":    "optional",
+	}
 
 	err := json.NewDecoder(r.Body).Decode(&userMap)
 	if err != nil {
 		SendResponse(w, 500, err.Error(), "error", nil)
+		return
+	}
+
+	// Check if there are any missing arguments
+	missingArgs := CheckArgs(userMap, requiredArgs)
+	if missingArgs != nil {
+		SendResponse(w, 400, missingArgs, "fail", nil)
 		return
 	}
 

@@ -26,7 +26,7 @@ type failResponse struct {
 	Data   map[string]string
 }
 
-// SendResponse is a function to send JSON-formatted HTTP response
+// SendResponse : function to send JSON-formatted HTTP response
 func SendResponse(w http.ResponseWriter, statusCode int, payload interface{}, responseType string, options map[string]string) {
 	var response []byte
 	var err error
@@ -94,4 +94,29 @@ func GenerateAccessToken(userKey *datastore.Key) string {
 	template.WriteString(utils.RandSeq(5))
 
 	return base64.StdEncoding.EncodeToString([]byte(template.String()))
+}
+
+// CheckArgs : function to check if an endpoint's arguments are already supplied completely
+func CheckArgs(suppliedArgs map[string]interface{}, requiredArgs map[string]string) map[string]string {
+	var errorList []string
+
+	for key, value := range requiredArgs {
+		if suppliedArgs[key] == nil && value == "required" {
+			errorList = append(errorList, key)
+		}
+	}
+
+	if len(errorList) > 0 {
+		// Missing arguments
+		result := make(map[string]string)
+
+		for _, value := range errorList {
+			result[value] = "This argument is missing from the request"
+		}
+
+		return result
+	}
+
+	// Everything is fine
+	return nil
 }
