@@ -35,6 +35,8 @@ func init() {
 	s.HandleFunc("/users/{userKey}", routes.UpdateUsers).Methods("PUT")
 	s.HandleFunc("/users/{userKey}", routes.GetUsers).Methods("GET")
 
+	s.HandleFunc("/characters", routes.CreateCharacters).Methods("POST")
+
 	s.HandleFunc("/tokens", routes.RefreshAccessToken).Methods("GET")
 
 	s.Use(middlewares.Authenticate)
