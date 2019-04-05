@@ -36,6 +36,9 @@ func init() {
 	s.HandleFunc("/users/{userKey}", routes.GetUsers).Methods("GET")
 
 	s.HandleFunc("/characters", routes.CreateCharacters).Methods("POST")
+	s.HandleFunc("/characters/{characterKey}", routes.UpdateCharacters).Methods("PUT")
+	s.HandleFunc("/characters/{characterKey}", routes.GetCharacters).Methods("GET")
+	s.HandleFunc("/characters/{characterKey}", routes.DeleteCharacters).Methods("DELETE")
 
 	s.HandleFunc("/tokens", routes.RefreshAccessToken).Methods("GET")
 

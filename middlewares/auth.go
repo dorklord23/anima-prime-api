@@ -101,6 +101,7 @@ func Authenticate(next http.Handler) http.Handler {
 
 			context.Set(r, "currentUserAuthority", userStruct.Authority)
 			context.Set(r, "currentUserEmail", userStruct.Email)
+			context.Set(r, "currentUserKey", splitStrings[0])
 
 			next.ServeHTTP(w, r)
 		}
