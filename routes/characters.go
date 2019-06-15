@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/mitchellh/mapstructure"
@@ -51,14 +52,14 @@ func CreateCharacters(w http.ResponseWriter, r *http.Request) {
 	// Parse the request body and populate user
 	err := json.NewDecoder(r.Body).Decode(&characterMap)
 	if err != nil {
-		SendResponse(w, 500, err.Error(), "error", nil)
+		utils.SendResponse(w, 500, err.Error(), "error", nil)
 		return
 	}
 
 	// Check if there are any missing arguments
-	missingArgs := CheckArgs(characterMap, requiredArgs)
+	missingArgs := utils.CheckArgs(characterMap, requiredArgs)
 	if missingArgs != nil {
-		SendResponse(w, 400, missingArgs, "fail", nil)
+		utils.SendResponse(w, 400, missingArgs, "fail", nil)
 		return
 	}
 
@@ -66,14 +67,14 @@ func CreateCharacters(w http.ResponseWriter, r *http.Request) {
 	characterMap["ParentKey"] = context.Get(r, "currentUserKey")
 	err3 := mapstructure.Decode(characterMap, &characterStruct)
 	if err3 != nil {
-		SendResponse(w, 500, err3.Error(), "error", nil)
+		utils.SendResponse(w, 500, err3.Error(), "error", nil)
 		return
 	}
 
 	// Save to Datastore
 	characterKey, err4 := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "characters", nil), &characterStruct)
 	if err4 != nil {
-		SendResponse(w, 500, err4.Error(), "error", nil)
+		utils.SendResponse(w, 500, err4.Error(), "error", nil)
 		return
 	}
 
@@ -83,7 +84,7 @@ func CreateCharacters(w http.ResponseWriter, r *http.Request) {
 	data["ID"] = characterKey.Encode()
 	options["Location"] = location
 
-	SendResponse(w, 201, data, "success", options)
+	utils.SendResponse(w, 201, data, "success", options)
 }
 
 // UpdateCharacters : endpoint to update a character (both PC and NPC)
@@ -105,14 +106,14 @@ func UpdateCharacters(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&characterMap)
 	if err != nil {
-		SendResponse(w, 500, err.Error(), "error", nil)
+		utils.SendResponse(w, 500, err.Error(), "error", nil)
 		return
 	}
 
 	// Check if there are any missing arguments
-	missingArgs := CheckArgs(characterMap, requiredArgs)
+	missingArgs := utils.CheckArgs(characterMap, requiredArgs)
 	if missingArgs != nil {
-		SendResponse(w, 400, missingArgs, "fail", nil)
+		utils.SendResponse(w, 400, missingArgs, "fail", nil)
 		return
 	}
 
@@ -121,8 +122,8 @@ func UpdateCharacters(w http.ResponseWriter, r *http.Request) {
 	key, err3 := datastore.DecodeKey(params["characterKey"])
 	if err3 != nil {
 		data := make(map[string]string)
-		data["Message"] = message404
-		SendResponse(w, 404, data, "fail", nil)
+		data["Message"] = err3.Error()
+		utils.SendResponse(w, 404, data, "fail", nil)
 		return
 	}
 
@@ -136,24 +137,24 @@ func UpdateCharacters(w http.ResponseWriter, r *http.Request) {
 		// No such user
 		data := make(map[string]string)
 		data["Message"] = "There is no such user to update"
-		SendResponse(w, 404, data, "fail", nil)
+		utils.SendResponse(w, 404, data, "fail", nil)
 		return
 	}
 	if err5 != nil {
-		SendResponse(w, 500, err5.Error(), "error", nil)
+		utils.SendResponse(w, 500, err5.Error(), "error", nil)
 		return
 	}
 
 	// Check the requester's authority first
 	currentUserAuthority := context.Get(r, "currentUserAuthority")
-	if currentUserAuthority != adminAuthority {
+	if currentUserAuthority != utils.AdminAuthority {
 		// Proceed to compare the emails
 		currentUserKey := context.Get(r, "currentUserKey")
 		if character.ParentKey != currentUserKey {
 			// Different key. Hence, the user is not eligible to update the target character
 			data := make(map[string]string)
 			data["Message"] = "You are not eligible to update this character"
-			SendResponse(w, 403, data, "fail", nil)
+			utils.SendResponse(w, 403, data, "fail", nil)
 			return
 		}
 	}
@@ -161,21 +162,21 @@ func UpdateCharacters(w http.ResponseWriter, r *http.Request) {
 	// Overwrite it with the new one
 	err2 := mapstructure.Decode(characterMap, &character)
 	if err2 != nil {
-		SendResponse(w, 500, err2.Error(), "error", nil)
+		utils.SendResponse(w, 500, err2.Error(), "error", nil)
 		return
 	}
 
 	// Commit it to Datastore
 	_, err4 := datastore.Put(ctx, key, &character)
 	if err4 != nil {
-		SendResponse(w, 500, err4.Error(), "error", nil)
+		utils.SendResponse(w, 500, err4.Error(), "error", nil)
 		return
 	}
 
 	data := make(map[string]string)
 	data["Message"] = "OK"
 
-	SendResponse(w, 204, data, "success", nil)
+	utils.SendResponse(w, 204, data, "success", nil)
 }
 
 // GetCharacters : endpoint to retrieve a character (both PC and NPC)

@@ -1,4 +1,4 @@
-package routes
+package utils
 
 import (
 	"encoding/base64"
@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dorklord23/anima-prime/utils"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -91,7 +90,7 @@ func GenerateAccessToken(userKey *datastore.Key) string {
 	// Expiry time for the token in 1 days
 	template.WriteString("1")
 	template.WriteString("|")
-	template.WriteString(utils.RandSeq(5))
+	template.WriteString(RandSeq(5))
 
 	return base64.StdEncoding.EncodeToString([]byte(template.String()))
 }

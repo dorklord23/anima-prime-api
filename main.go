@@ -40,6 +40,12 @@ func init() {
 	s.HandleFunc("/characters/{characterKey}", routes.GetCharacters).Methods("GET")
 	s.HandleFunc("/characters/{characterKey}", routes.DeleteCharacters).Methods("DELETE")
 
+	s.HandleFunc("/scenes", routes.CreateScenes).Methods("POST")
+	s.HandleFunc("/scenes/{sceneKey}", routes.UpdateScenes).Methods("PUT")
+
+	s.HandleFunc("/conflicts", routes.CreateConflicts).Methods("POST")
+	s.HandleFunc("/conflicts/{conflictKey}", routes.UpdateConflicts).Methods("PUT")
+
 	s.HandleFunc("/tokens", routes.RefreshAccessToken).Methods("GET")
 
 	s.Use(middlewares.Authenticate)

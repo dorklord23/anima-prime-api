@@ -26,9 +26,6 @@ type User struct {
 	ModifiedAt   time.Time
 }
 
-var message404 = "There is no such user"
-var adminAuthority = "admin"
-
 // CreateUsers : endpoint to create a new user and obtain access token
 func CreateUsers(w http.ResponseWriter, r *http.Request) {
 	userMap := make(map[string]interface{})
@@ -43,14 +40,14 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
 	// Parse the request body and populate user
 	err := json.NewDecoder(r.Body).Decode(&userMap)
 	if err != nil {
-		SendResponse(w, 500, err.Error(), "error", nil)
+		utils.SendResponse(w, 500, err.Error(), "error", nil)
 		return
 	}
 
 	// Check if there are any missing arguments
-	missingArgs := CheckArgs(userMap, requiredArgs)
+	missingArgs := utils.CheckArgs(userMap, requiredArgs)
 	if missingArgs != nil {
-		SendResponse(w, 400, missingArgs, "fail", nil)
+		utils.SendResponse(w, 400, missingArgs, "fail", nil)
 		return
 	}
 
@@ -58,7 +55,7 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
 	if userMap["Password"] != userMap["PasswordConfirm"] {
 		data := make(map[string]string)
 		data["PasswordConfirm"] = "Make sure this field is exactly the same with Password"
-		SendResponse(w, 400, data, "fail", nil)
+		utils.SendResponse(w, 400, data, "fail", nil)
 		return
 	}
 
@@ -73,14 +70,14 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		if err != nil {
-			SendResponse(w, 500, err.Error(), "error", nil)
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
 			return
 		}
 
 		// The email has already been used
 		data := make(map[string]string)
 		data["Email"] = "The email has already been used"
-		SendResponse(w, 409, data, "fail", nil)
+		utils.SendResponse(w, 409, data, "fail", nil)
 		return
 	}
 
@@ -106,18 +103,18 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
 	var userStruct User
 	err3 := mapstructure.Decode(userMap, &userStruct)
 	if err3 != nil {
-		SendResponse(w, 500, err3.Error(), "error", nil)
+		utils.SendResponse(w, 500, err3.Error(), "error", nil)
 		return
 	}
 
 	// Save to Datastore
 	userKey, err4 := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "users", nil), &userStruct)
 	if err4 != nil {
-		SendResponse(w, 500, err4.Error(), "error", nil)
+		utils.SendResponse(w, 500, err4.Error(), "error", nil)
 		return
 	}
 
-	token := GenerateAccessToken(userKey)
+	token := utils.GenerateAccessToken(userKey)
 
 	data := make(map[string]string)
 	options := make(map[string]string)
@@ -126,7 +123,7 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
 	data["Token"] = token
 	data["RefreshToken"] = refreshToken
 
-	SendResponse(w, 201, data, "success", options)
+	utils.SendResponse(w, 201, data, "success", options)
 }
 
 // UpdateUsers : endpoint to update a user data
@@ -142,14 +139,14 @@ func UpdateUsers(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&userMap)
 	if err != nil {
-		SendResponse(w, 500, err.Error(), "error", nil)
+		utils.SendResponse(w, 500, err.Error(), "error", nil)
 		return
 	}
 
 	// Check if there are any missing arguments
-	missingArgs := CheckArgs(userMap, requiredArgs)
+	missingArgs := utils.CheckArgs(userMap, requiredArgs)
 	if missingArgs != nil {
-		SendResponse(w, 400, missingArgs, "fail", nil)
+		utils.SendResponse(w, 400, missingArgs, "fail", nil)
 		return
 	}
 
@@ -158,8 +155,8 @@ func UpdateUsers(w http.ResponseWriter, r *http.Request) {
 	key, err3 := datastore.DecodeKey(params["userKey"])
 	if err3 != nil {
 		data := make(map[string]string)
-		data["Message"] = message404
-		SendResponse(w, 404, data, "fail", nil)
+		data["Message"] = err3.Error()
+		utils.SendResponse(w, 404, data, "fail", nil)
 		return
 	}
 
@@ -173,24 +170,24 @@ func UpdateUsers(w http.ResponseWriter, r *http.Request) {
 		// No such user
 		data := make(map[string]string)
 		data["Message"] = "There is no such user to update"
-		SendResponse(w, 404, data, "fail", nil)
+		utils.SendResponse(w, 404, data, "fail", nil)
 		return
 	}
 	if err5 != nil {
-		SendResponse(w, 500, err5.Error(), "error", nil)
+		utils.SendResponse(w, 500, err5.Error(), "error", nil)
 		return
 	}
 
 	// Check the requester's authority first
 	currentUserAuthority := context.Get(r, "currentUserAuthority")
-	if currentUserAuthority != adminAuthority {
+	if currentUserAuthority != utils.AdminAuthority {
 		// Proceed to compare the emails
 		currentUserEmail := context.Get(r, "currentUserEmail")
 		if userStruct.Email != currentUserEmail {
 			// Different email. Hence, the user is not eligible to update the target profile
 			data := make(map[string]string)
 			data["Message"] = "You are not eligible to update this user"
-			SendResponse(w, 403, data, "fail", nil)
+			utils.SendResponse(w, 403, data, "fail", nil)
 			return
 		}
 	}
@@ -198,21 +195,21 @@ func UpdateUsers(w http.ResponseWriter, r *http.Request) {
 	// Overwrite it with the new one
 	err2 := mapstructure.Decode(userMap, &userStruct)
 	if err2 != nil {
-		SendResponse(w, 500, err2.Error(), "error", nil)
+		utils.SendResponse(w, 500, err2.Error(), "error", nil)
 		return
 	}
 
 	// Commit it to Datastore
 	_, err4 := datastore.Put(ctx, key, &userStruct)
 	if err4 != nil {
-		SendResponse(w, 500, err4.Error(), "error", nil)
+		utils.SendResponse(w, 500, err4.Error(), "error", nil)
 		return
 	}
 
 	data := make(map[string]string)
 	data["Message"] = "OK"
 
-	SendResponse(w, 204, data, "success", nil)
+	utils.SendResponse(w, 204, data, "success", nil)
 }
 
 // GetUsers : endpoint to retrieve a user data
@@ -227,8 +224,8 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	key, err := datastore.DecodeKey(params["userKey"])
 	if err != nil {
 		data := make(map[string]string)
-		data["Message"] = message404
-		SendResponse(w, 404, data, "fail", nil)
+		data["Message"] = err.Error()
+		utils.SendResponse(w, 404, data, "fail", nil)
 		return
 	}
 
@@ -240,31 +237,31 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		// No such user
 		data := make(map[string]string)
 		data["Message"] = "There is no such user to retrieve"
-		SendResponse(w, 404, data, "fail", nil)
+		utils.SendResponse(w, 404, data, "fail", nil)
 		return
 	}
 	if err2 != nil {
-		SendResponse(w, 500, err2.Error(), "error", nil)
+		utils.SendResponse(w, 500, err2.Error(), "error", nil)
 		return
 	}
 
 	// Check the requester's authority first
 	currentUserAuthority := context.Get(r, "currentUserAuthority")
-	if currentUserAuthority != adminAuthority {
+	if currentUserAuthority != utils.AdminAuthority {
 		// Proceed to compare the emails
 		currentUserEmail := context.Get(r, "currentUserEmail")
 		if userStruct.Email != currentUserEmail {
 			// Different email. Hence, the user is not to retrieve the target profile
 			data := make(map[string]string)
 			data["Message"] = "You are not eligible to retrieve this user data"
-			SendResponse(w, 403, data, "fail", nil)
+			utils.SendResponse(w, 403, data, "fail", nil)
 			return
 		}
 	}
 
 	err3 := mapstructure.Decode(userStruct, &userMap)
 	if err3 != nil {
-		SendResponse(w, 500, err3.Error(), "error", nil)
+		utils.SendResponse(w, 500, err3.Error(), "error", nil)
 		return
 	}
 
@@ -287,5 +284,5 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		responseTemplate[strKey] = strValue
 	}
 
-	SendResponse(w, 200, responseTemplate, "success", nil)
+	utils.SendResponse(w, 200, responseTemplate, "success", nil)
 }

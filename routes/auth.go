@@ -25,14 +25,14 @@ func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 	// Parse the request body and populate loginData
 	err := json.NewDecoder(r.Body).Decode(&loginData)
 	if err != nil {
-		SendResponse(w, 500, err.Error(), "error", nil)
+		utils.SendResponse(w, 500, err.Error(), "error", nil)
 		return
 	}
 
 	// Check if there are any missing arguments
-	missingArgs := CheckArgs(loginData, requiredArgs)
+	missingArgs := utils.CheckArgs(loginData, requiredArgs)
 	if missingArgs != nil {
-		SendResponse(w, 400, missingArgs, "fail", nil)
+		utils.SendResponse(w, 400, missingArgs, "fail", nil)
 		return
 	}
 
@@ -45,11 +45,11 @@ func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 		if err2 == datastore.Done {
 			data := make(map[string]string)
 			data["Message"] = "Wrong password or email"
-			SendResponse(w, 401, data, "fail", nil)
+			utils.SendResponse(w, 401, data, "fail", nil)
 			return
 		}
 		if err2 != nil {
-			SendResponse(w, 500, err2.Error(), "error", nil)
+			utils.SendResponse(w, 500, err2.Error(), "error", nil)
 			return
 		}
 
@@ -59,13 +59,13 @@ func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data := make(map[string]string)
 			data["Message"] = "Wrong password or email"
-			SendResponse(w, 401, data, "fail", nil)
+			utils.SendResponse(w, 401, data, "fail", nil)
 			return
 		}
 	}
 
 	// Generate the access token and refresh token
-	accessToken := GenerateAccessToken(key)
+	accessToken := utils.GenerateAccessToken(key)
 	refreshToken := utils.RandSeq(20)
 
 	// Update the user data because refresh token is stored in datastore
@@ -74,7 +74,7 @@ func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 	// Commit to to server
 	_, err3 := datastore.Put(ctx, key, &user)
 	if err3 != nil {
-		SendResponse(w, 500, err3.Error(), "error", nil)
+		utils.SendResponse(w, 500, err3.Error(), "error", nil)
 		return
 	}
 
@@ -83,7 +83,7 @@ func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 		"RefreshToken": refreshToken,
 	}
 
-	SendResponse(w, 200, response, "success", nil)
+	utils.SendResponse(w, 200, response, "success", nil)
 }
 
 // RefreshAccessToken : endpoint to refresh access token and refresh token without login.
@@ -102,11 +102,11 @@ func RefreshAccessToken(w http.ResponseWriter, r *http.Request) {
 		if err == datastore.Done {
 			data := make(map[string]string)
 			data["Message"] = "There is no such refresh token"
-			SendResponse(w, 404, data, "fail", nil)
+			utils.SendResponse(w, 404, data, "fail", nil)
 			return
 		}
 		if err != nil {
-			SendResponse(w, 500, err.Error(), "error", nil)
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
 			return
 		}
 
@@ -115,7 +115,7 @@ func RefreshAccessToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate the access token and refresh token
-	accessToken := GenerateAccessToken(key)
+	accessToken := utils.GenerateAccessToken(key)
 	refreshToken := utils.RandSeq(20)
 
 	// Update the user data because refresh token is stored in datastore
@@ -124,7 +124,7 @@ func RefreshAccessToken(w http.ResponseWriter, r *http.Request) {
 	// Commit to to server
 	_, err3 := datastore.Put(ctx, key, &user)
 	if err3 != nil {
-		SendResponse(w, 500, err3.Error(), "error", nil)
+		utils.SendResponse(w, 500, err3.Error(), "error", nil)
 		return
 	}
 
@@ -133,7 +133,7 @@ func RefreshAccessToken(w http.ResponseWriter, r *http.Request) {
 		"RefreshToken": refreshToken,
 	}
 
-	SendResponse(w, 200, response, "success", nil)
+	utils.SendResponse(w, 200, response, "success", nil)
 }
 
 func checkPasswordHash(password, hash string) bool {
