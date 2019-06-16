@@ -46,6 +46,12 @@ func init() {
 	s.HandleFunc("/conflicts", routes.CreateConflicts).Methods("POST")
 	s.HandleFunc("/conflicts/{conflictKey}", routes.UpdateConflicts).Methods("PUT")
 
+	s.HandleFunc("/powers", routes.CreatePowers).Methods("POST")
+	s.HandleFunc("/powers/{resourceKey}", routes.UpdatePowers).Methods("PUT")
+
+	s.HandleFunc("/eidolons", routes.CreateEidolons).Methods("POST")
+	s.HandleFunc("/eidolons/{resourceKey}", routes.UpdateEidolons).Methods("PUT")
+
 	s.HandleFunc("/tokens", routes.RefreshAccessToken).Methods("GET")
 
 	s.Use(middlewares.Authenticate)
