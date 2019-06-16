@@ -1,9 +1,16 @@
+/* Copyright 2019 Tri Rumekso Anggie Wibowo (trirawibowo [at] gmail [dot] com)
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 package models
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
@@ -20,7 +27,7 @@ func CreateResource(resourceName string, requiredArgs map[string]string, resourc
 	// Parse the request body and populate user
 	err := json.NewDecoder(r.Body).Decode(&resourceMap)
 	if err != nil {
-		utils.SendResponse(w, 500, err.Error(), "error", nil)
+		utils.SendResponse(w, 500, "1 "+err.Error(), "error", nil)
 		return
 	}
 
@@ -35,7 +42,7 @@ func CreateResource(resourceName string, requiredArgs map[string]string, resourc
 	// resourceMap["IsResolved"] = false
 	err3 := mapstructure.Decode(resourceMap, &resourceStruct)
 	if err3 != nil {
-		utils.SendResponse(w, 500, err3.Error(), "error", nil)
+		utils.SendResponse(w, 500, "3 "+err3.Error(), "error", nil)
 		return
 	}
 
@@ -43,7 +50,8 @@ func CreateResource(resourceName string, requiredArgs map[string]string, resourc
 
 	resourceKey, err4 := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, resourceName, nil), &resourceStruct)
 	if err4 != nil {
-		utils.SendResponse(w, 500, err4.Error(), "error", nil)
+		text := reflect.TypeOf(&resourceStruct).Kind().String()
+		utils.SendResponse(w, 500, "4 "+text+err4.Error(), "error", nil)
 		return
 	}
 
