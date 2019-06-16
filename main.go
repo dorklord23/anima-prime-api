@@ -52,6 +52,10 @@ func init() {
 	s.HandleFunc("/eidolons", routes.CreateEidolons).Methods("POST")
 	s.HandleFunc("/eidolons/{resourceKey}", routes.UpdateEidolons).Methods("PUT")
 
+	s.HandleFunc("/characters/{characterKey}/traits/{traitIndex}", routes.ChangeTraitTick).Methods("PUT")
+
+	s.HandleFunc("/rerolls", routes.Reroll).Methods("GET")
+
 	s.HandleFunc("/tokens", routes.RefreshAccessToken).Methods("GET")
 
 	s.Use(middlewares.Authenticate)

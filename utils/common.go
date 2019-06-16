@@ -9,6 +9,7 @@ package utils
 import (
 	"encoding/base64"
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -16,62 +17,21 @@ import (
 	"google.golang.org/appengine/datastore"
 )
 
-type errorResponse struct {
-	Status  string
-	Message string
-}
-
-type successResponse struct {
-	Status string
-	Data   map[string]string
-}
-
-type failResponse struct {
-	Status string
-	Data   map[string]string
-}
-
 // SendResponse : function to send JSON-formatted HTTP response
 func SendResponse(w http.ResponseWriter, statusCode int, payload interface{}, responseType string, options map[string]string) {
-	var response []byte
-	var err error
+	template := make(map[string]interface{})
+	template["Status"] = responseType
 
-	switch responseType {
-	case "success":
-		template := successResponse{
-			Status: "success",
-			Data:   payload.(map[string]string),
-		}
+	if responseType == "error" {
+		template["Message"] = payload
+	} else {
+		template["Data"] = payload
+	}
 
-		response, err = json.Marshal(template)
-		if err != nil {
-			// http.Error(w, err.Error(), http.StatusInternalServerError)
-			SendResponse(w, 500, err.Error(), "error", nil)
-			return
-		}
-	case "fail":
-		template := failResponse{
-			Status: "fail",
-			Data:   payload.(map[string]string),
-		}
-
-		response, err = json.Marshal(template)
-		if err != nil {
-			SendResponse(w, 500, err.Error(), "error", nil)
-			return
-		}
-	case "error":
-		template := errorResponse{
-			Status:  "error",
-			Message: payload.(string),
-		}
-
-		response, err = json.Marshal(template)
-		if err != nil {
-			SendResponse(w, 500, err.Error(), "error", nil)
-			return
-		}
-	default:
+	response, err := json.Marshal(template)
+	if err != nil {
+		SendResponse(w, 500, err.Error(), "error", nil)
+		return
 	}
 
 	if options != nil {
@@ -124,4 +84,18 @@ func CheckArgs(suppliedArgs map[string]interface{}, requiredArgs map[string]stri
 
 	// Everything is fine
 	return nil
+}
+
+// DieRandomizer : randomizes arbitrary number of dice roll
+func DieRandomizer(dieQty int) []int {
+	result := make([]int, dieQty)
+	rand.Seed(time.Now().UnixNano())
+	min := 1
+	max := 6
+
+	for i := 0; i < dieQty; i++ {
+		result[i] = rand.Intn(max-min) + min
+	}
+
+	return result
 }

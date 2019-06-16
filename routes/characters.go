@@ -25,13 +25,19 @@ type Skill struct {
 	Rating int
 }
 
+// Trait : data structure for character traits
+type Trait struct {
+	Value    string
+	IsTicked bool
+}
+
 // Character : data structure for characters
 type Character struct {
 	Name       string
 	Concept    string
 	Mark       string
 	Passion    string
-	Traits     []string
+	Traits     []Trait
 	Skills     []Skill
 	Powers     []string
 	Background string
