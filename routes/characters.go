@@ -8,9 +8,9 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"github.com/dorklord23/anima-prime/models"
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -20,7 +20,7 @@ import (
 )
 
 // Skill : data structure for character skills
-type Skill struct {
+/* type Skill struct {
 	ID     string
 	Rating int
 }
@@ -43,11 +43,29 @@ type Character struct {
 	Background string
 	Links      []string
 	ParentKey  string
-}
+} */
 
 // CreateCharacters : endpoint to create a new character (both PC and NPC)
 func CreateCharacters(w http.ResponseWriter, r *http.Request) {
-	characterMap := make(map[string]interface{})
+	requiredArgs := map[string]string{
+		"Name":       "required",
+		"Concept":    "required",
+		"Mark":       "required",
+		"Passion":    "required",
+		"Traits":     "required",
+		"Skills":     "required",
+		"Powers":     "required",
+		"Background": "required",
+		"Links":      "required",
+	}
+
+	resourceMap := make(map[string]interface{})
+	resourceMap["ParentKey"] = context.Get(r, "currentUserKey")
+
+	var resource models.Character
+	models.CreateResource("characters", requiredArgs, resourceMap, resource, w, r)
+
+	/* characterMap := make(map[string]interface{})
 	ctx := appengine.NewContext(r)
 	requiredArgs := map[string]string{
 		"Name":       "required",
@@ -96,7 +114,7 @@ func CreateCharacters(w http.ResponseWriter, r *http.Request) {
 	data["ID"] = characterKey.Encode()
 	options["Location"] = location
 
-	utils.SendResponse(w, 201, data, "success", options)
+	utils.SendResponse(w, 201, data, "success", options) */
 }
 
 // UpdateCharacters : endpoint to update a character (both PC and NPC)
@@ -141,7 +159,7 @@ func UpdateCharacters(w http.ResponseWriter, r *http.Request) {
 
 	// Because Datastore doesn't differentiate between creating and updating entity,
 	// we need to retrieve the old data first and modify it before commiting it to Datastore
-	var character Character
+	var character models.Character
 
 	// Retrieve the old data
 	err5 := datastore.Get(ctx, key, &character)

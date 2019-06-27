@@ -8,9 +8,9 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"github.com/dorklord23/anima-prime/models"
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -20,7 +20,7 @@ import (
 )
 
 // Eidolon : data structure for eidolons
-type Eidolon struct {
+/* type Eidolon struct {
 	Name        string
 	Description string
 	Level       int
@@ -29,13 +29,10 @@ type Eidolon struct {
 	Powers      []int
 	Weakness    int
 	ParentKey   string
-}
+} */
 
 // CreateEidolons : endpoint to create a new eidolon
 func CreateEidolons(w http.ResponseWriter, r *http.Request) {
-	resourceMap := make(map[string]interface{})
-	resourceName := "eidolons"
-	ctx := appengine.NewContext(r)
 	requiredArgs := map[string]string{
 		"Name":        "required",
 		"Description": "required",
@@ -46,8 +43,14 @@ func CreateEidolons(w http.ResponseWriter, r *http.Request) {
 		"Weakness":    "required",
 	}
 
+	eidolonMap := make(map[string]interface{})
+	eidolonMap["ParentKey"] = context.Get(r, "currentUserKey")
+
+	var eidolon models.Eidolon
+	models.CreateResource("eidolons", requiredArgs, eidolonMap, eidolon, w, r)
+
 	// Parse the request body and populate user
-	err := json.NewDecoder(r.Body).Decode(&resourceMap)
+	/* err := json.NewDecoder(r.Body).Decode(&resourceMap)
 	if err != nil {
 		utils.SendResponse(w, 500, err.Error(), "error", nil)
 		return
@@ -81,7 +84,7 @@ func CreateEidolons(w http.ResponseWriter, r *http.Request) {
 	data["ID"] = resourceKey.Encode()
 	options["Location"] = location
 
-	utils.SendResponse(w, 201, data, "success", options)
+	utils.SendResponse(w, 201, data, "success", options) */
 }
 
 // UpdateEidolons : endpoint to update an eidolon
@@ -123,7 +126,7 @@ func UpdateEidolons(w http.ResponseWriter, r *http.Request) {
 
 	// Because Datastore doesn't differentiate between creating and updating entity,
 	// we need to retrieve the old data first and modify it before commiting it to Datastore
-	var resourceStruct Eidolon
+	var resourceStruct models.Eidolon
 
 	// Retrieve the old data
 	err5 := datastore.Get(ctx, key, &resourceStruct)

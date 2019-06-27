@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/dorklord23/anima-prime/models"
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -35,7 +36,7 @@ func ChangeTraitTick(w http.ResponseWriter, r *http.Request) {
 
 	// Because Datastore doesn't differentiate between creating and updating entity,
 	// we need to retrieve the old data first and modify it before commiting it to Datastore
-	var character Character
+	var character models.Character
 
 	// Retrieve the old data
 	err5 := datastore.Get(ctx, key, &character)
@@ -72,7 +73,7 @@ func ChangeTraitTick(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	characterTraits := make(map[int]Trait)
+	characterTraits := make(map[int]models.Trait)
 
 	for i := 0; i < len(character.Traits); i++ {
 		characterTraits[i] = character.Traits[i]
@@ -120,4 +121,13 @@ func Reroll(w http.ResponseWriter, r *http.Request) {
 	data["Dice"] = utils.DieRandomizer(dieQty)
 
 	utils.SendResponse(w, 200, data, "success", nil)
+}
+
+/* UseAwesomeToken : Awesome Tokens might be used for the following:
+ * 1 AT : players/eidolons can take another strike, achievement, charge power action,
+ *        or Catch Your Breath after they take an action.
+ * 1 AT : GM can disarm a character's Soulbound Weapon. The character gains bonus dice to earn
+ */
+func UseAwesomeToken(w http.ResponseWriter, r *http.Request) {
+
 }

@@ -23,11 +23,11 @@ import (
 
 // CreateResource : function to handle creating new entity in Google Datastore
 func CreateResource(resourceName string, requiredArgs map[string]string, resourceMap map[string]interface{}, resourceStruct interface{}, w http.ResponseWriter, r *http.Request) {
-	// resourceMap := make(map[string]interface{})
 	ctx := appengine.NewContext(r)
+	var err error
 
 	// Parse the request body and populate user
-	err := json.NewDecoder(r.Body).Decode(&resourceMap)
+	err = json.NewDecoder(r.Body).Decode(&resourceMap)
 	if err != nil {
 		utils.SendResponse(w, 500, "1 "+err.Error(), "error", nil)
 		return
@@ -40,20 +40,88 @@ func CreateResource(resourceName string, requiredArgs map[string]string, resourc
 		return
 	}
 
-	resourceMap["ParentKey"] = context.Get(r, "currentUserKey")
-	// resourceMap["IsResolved"] = false
-	err3 := mapstructure.Decode(resourceMap, &resourceStruct)
-	if err3 != nil {
-		utils.SendResponse(w, 500, "3 "+err3.Error(), "error", nil)
-		return
-	}
-
 	// Save to Datastore
+	var resourceKey *datastore.Key
+	// var err4 error
 
-	resourceKey, err4 := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, resourceName, nil), &resourceStruct)
-	if err4 != nil {
-		text := reflect.TypeOf(&resourceStruct).Kind().String()
-		utils.SendResponse(w, 500, "4 "+text+err4.Error(), "error", nil)
+	switch resourceType := resourceStruct.(type) {
+	// case Character, Conflict, Eidolon, Modifier, StatusChange, Power, SceneBonus, Scene, User:
+	// Each case must uses one type only. Otherwise, it won't be saved properly (saved as new data but empty)
+	case Character:
+		err = mapstructure.Decode(resourceMap, &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+
+		resourceKey, err = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, resourceName, nil), &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+	case Conflict:
+		err = mapstructure.Decode(resourceMap, &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+
+		resourceKey, err = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, resourceName, nil), &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+	case Eidolon:
+		err = mapstructure.Decode(resourceMap, &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+
+		resourceKey, err = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, resourceName, nil), &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+	case Power:
+		err = mapstructure.Decode(resourceMap, &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+
+		resourceKey, err = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, resourceName, nil), &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+	case Scene:
+		err = mapstructure.Decode(resourceMap, &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+
+		resourceKey, err = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, resourceName, nil), &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+	case User:
+		err = mapstructure.Decode(resourceMap, &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+
+		resourceKey, err = datastore.Put(ctx, datastore.NewIncompleteKey(ctx, resourceName, nil), &resourceType)
+		if err != nil {
+			utils.SendResponse(w, 500, err.Error(), "error", nil)
+			return
+		}
+	default:
+		text := reflect.TypeOf(resourceStruct).Name() // Kind().String()
+		utils.SendResponse(w, 500, "Unknown resource type: "+text, "error", nil)
 		return
 	}
 

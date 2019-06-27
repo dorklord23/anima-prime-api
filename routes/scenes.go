@@ -8,9 +8,9 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"github.com/dorklord23/anima-prime/models"
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -20,7 +20,7 @@ import (
 )
 
 // SceneBonus : data structure for scene bonus
-type SceneBonus struct {
+/* type SceneBonus struct {
 	BonusID string
 	UserID  string
 }
@@ -32,11 +32,22 @@ type Scene struct {
 	IsResolved  bool
 	Bonus       []SceneBonus
 	ParentKey   string
-}
+} */
 
 // CreateScenes : endpoint to create a new scene
 func CreateScenes(w http.ResponseWriter, r *http.Request) {
+	requiredArgs := map[string]string{
+		"Name":        "required",
+		"Description": "required",
+	}
+
 	sceneMap := make(map[string]interface{})
+	sceneMap["IsResolved"] = false
+	sceneMap["ParentKey"] = context.Get(r, "currentUserKey")
+
+	var scene models.Scene
+	models.CreateResource("scenes", requiredArgs, sceneMap, scene, w, r)
+	/* sceneMap := make(map[string]interface{})
 	ctx := appengine.NewContext(r)
 	requiredArgs := map[string]string{
 		"Name":        "required",
@@ -79,7 +90,7 @@ func CreateScenes(w http.ResponseWriter, r *http.Request) {
 	data["ID"] = sceneKey.Encode()
 	options["Location"] = location
 
-	utils.SendResponse(w, 201, data, "success", options)
+	utils.SendResponse(w, 201, data, "success", options) */
 }
 
 // UpdateScenes : endpoint to update a scene
@@ -118,7 +129,7 @@ func UpdateScenes(w http.ResponseWriter, r *http.Request) {
 
 	// Because Datastore doesn't differentiate between creating and updating entity,
 	// we need to retrieve the old data first and modify it before commiting it to Datastore
-	var scene Scene
+	var scene models.Scene
 
 	// Retrieve the old data
 	err5 := datastore.Get(ctx, key, &scene)

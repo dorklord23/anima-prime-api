@@ -8,9 +8,9 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"github.com/dorklord23/anima-prime/models"
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -20,7 +20,7 @@ import (
 )
 
 // Conflict : data structure for conflicts
-type Conflict struct {
+/* type Conflict struct {
 	Name        string
 	Description string
 	Goal        string
@@ -28,11 +28,11 @@ type Conflict struct {
 	Targets     []string
 	IsResolved  bool
 	ParentKey   string
-}
+} */
 
 // CreateConflicts : endpoint to create a new conflict
 func CreateConflicts(w http.ResponseWriter, r *http.Request) {
-	/* requiredArgs := map[string]string{
+	requiredArgs := map[string]string{
 		"Name":        "required",
 		"Description": "required",
 		"Goal":        "required",
@@ -42,9 +42,11 @@ func CreateConflicts(w http.ResponseWriter, r *http.Request) {
 
 	conflictMap := make(map[string]interface{})
 	conflictMap["IsResolved"] = false
-	var conflict Conflict
-	models.CreateResource("conflicts", requiredArgs, conflictMap, conflict, w, r) */
-	conflictMap := make(map[string]interface{})
+	conflictMap["ParentKey"] = context.Get(r, "currentUserKey")
+
+	var conflict models.Conflict
+	models.CreateResource("conflicts", requiredArgs, conflictMap, conflict, w, r)
+	/* conflictMap := make(map[string]interface{})
 	ctx := appengine.NewContext(r)
 	requiredArgs := map[string]string{
 		"Name":        "required",
@@ -90,7 +92,7 @@ func CreateConflicts(w http.ResponseWriter, r *http.Request) {
 	data["ID"] = conflictKey.Encode()
 	options["Location"] = location
 
-	utils.SendResponse(w, 201, data, "success", options)
+	utils.SendResponse(w, 201, data, "success", options) */
 }
 
 // UpdateConflicts : endpoint to update a scene
@@ -131,7 +133,7 @@ func UpdateConflicts(w http.ResponseWriter, r *http.Request) {
 
 	// Because Datastore doesn't differentiate between creating and updating entity,
 	// we need to retrieve the old data first and modify it before commiting it to Datastore
-	var conflict Conflict
+	var conflict models.Conflict
 
 	// Retrieve the old data
 	err5 := datastore.Get(ctx, key, &conflict)

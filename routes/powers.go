@@ -8,9 +8,9 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"github.com/dorklord23/anima-prime/models"
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -20,7 +20,7 @@ import (
 )
 
 // Modifier : data structure for modifiers
-type Modifier struct {
+/* type Modifier struct {
 	TargetProp  string
 	Value       int
 	IsPermanent bool
@@ -46,11 +46,23 @@ type Power struct {
 // ApplyEffect : apply this particular power's effect
 func (p Power) ApplyEffect() {
 	// Do nothing for now
-}
+} */
 
 // CreatePowers : endpoint to create a new power
 func CreatePowers(w http.ResponseWriter, r *http.Request) {
-	resourceMap := make(map[string]interface{})
+	requiredArgs := map[string]string{
+		"Name":        "required",
+		"Description": "required",
+		"Type":        "required",
+		"Effect":      "required",
+	}
+
+	powerMap := make(map[string]interface{})
+	powerMap["ParentKey"] = context.Get(r, "currentUserKey")
+
+	var power models.Power
+	models.CreateResource("powers", requiredArgs, powerMap, power, w, r)
+	/* resourceMap := make(map[string]interface{})
 	ctx := appengine.NewContext(r)
 	requiredArgs := map[string]string{
 		"Name":        "required",
@@ -94,7 +106,7 @@ func CreatePowers(w http.ResponseWriter, r *http.Request) {
 	data["ID"] = resourceKey.Encode()
 	options["Location"] = location
 
-	utils.SendResponse(w, 201, data, "success", options)
+	utils.SendResponse(w, 201, data, "success", options) */
 }
 
 // UpdatePowers : endpoint to update a scene
@@ -132,7 +144,7 @@ func UpdatePowers(w http.ResponseWriter, r *http.Request) {
 
 	// Because Datastore doesn't differentiate between creating and updating entity,
 	// we need to retrieve the old data first and modify it before commiting it to Datastore
-	var resourceStruct Power
+	var resourceStruct models.Power
 
 	// Retrieve the old data
 	err5 := datastore.Get(ctx, key, &resourceStruct)

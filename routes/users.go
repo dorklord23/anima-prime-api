@@ -7,6 +7,12 @@
 package routes
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/dorklord23/anima-prime/models"
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -14,15 +20,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"time"
 )
 
 // User : struct to hold user data to commit to Datastore
-type User struct {
+/* type User struct {
 	FullName     string
 	Email        string
 	Hash         string
@@ -30,7 +31,7 @@ type User struct {
 	RefreshToken string
 	CreatedAt    time.Time
 	ModifiedAt   time.Time
-}
+} */
 
 // CreateUsers : endpoint to create a new user and obtain access token
 func CreateUsers(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +69,7 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
 	// Check if the email has been used already
 	q := datastore.NewQuery("users").Filter("Email =", userMap["Email"])
 	for t := q.Run(ctx); ; {
-		var x User
+		var x models.User
 		_, err := t.Next(&x)
 
 		if err == datastore.Done {
@@ -106,7 +107,7 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
 		userMap["Authority"] = "regular"
 	}
 
-	var userStruct User
+	var userStruct models.User
 	err3 := mapstructure.Decode(userMap, &userStruct)
 	if err3 != nil {
 		utils.SendResponse(w, 500, err3.Error(), "error", nil)
@@ -168,7 +169,7 @@ func UpdateUsers(w http.ResponseWriter, r *http.Request) {
 
 	// Because Datastore doesn't differentiate between creating and updating entity,
 	// we need to retrieve the old data first and modify it before commiting it to Datastore
-	var userStruct User
+	var userStruct models.User
 
 	// Retrieve the old data
 	err5 := datastore.Get(ctx, key, &userStruct)
@@ -235,7 +236,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userStruct User
+	var userStruct models.User
 
 	// Retrieve the data
 	err2 := datastore.Get(ctx, key, &userStruct)

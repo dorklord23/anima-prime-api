@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/dorklord23/anima-prime/models"
 	"github.com/dorklord23/anima-prime/utils"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/appengine"
@@ -20,7 +21,7 @@ import (
 func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	loginData := make(map[string]interface{})
-	var user User
+	var user models.User
 	var key *datastore.Key
 	var err2 error
 	requiredArgs := map[string]string{
@@ -94,7 +95,7 @@ func AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 
 // RefreshAccessToken : endpoint to refresh access token and refresh token without login.
 func RefreshAccessToken(w http.ResponseWriter, r *http.Request) {
-	var user User
+	var user models.User
 	var key *datastore.Key
 	var err error
 	ctx := appengine.NewContext(r)

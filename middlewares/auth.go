@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dorklord23/anima-prime/routes"
+	"github.com/dorklord23/anima-prime/models"
 	"github.com/dorklord23/anima-prime/utils"
 	"github.com/gorilla/context"
 	"google.golang.org/appengine"
@@ -91,7 +91,7 @@ func Authenticate(next http.Handler) http.Handler {
 			}
 
 			// Pass the requester's user key and authority to the handler
-			var userStruct routes.User
+			var userStruct models.User
 			err5 := datastore.Get(ctx, key, &userStruct)
 			if err5 == datastore.Done {
 				// The requester is not a registered user
